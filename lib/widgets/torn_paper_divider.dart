@@ -1,19 +1,17 @@
 // lib/widgets/torn_paper_divider.dart
-import 'package:flutter/material.dart';
-import 'dart:math' as math;
+import 'package:material_ui/material_ui.dart';
+import '../theme/app_colors.dart';
 
-/// Draws a torn-paper edge transition between the hero (stripe) section
-/// and the red "Get to know me" section below.
+/// Renders the torn-paper edge transition between the hero (stripe) section
+/// and the dark-red "Get to know me" section below using assets/images/paper.png.
 class TornPaperDivider extends StatelessWidget {
-  final Color topColor;
   final Color bottomColor;
   final double height;
 
   const TornPaperDivider({
     super.key,
-    required this.topColor,
-    required this.bottomColor,
-    this.height = 60,
+    this.bottomColor = AppColors.darkRed,
+    this.height = 80,
   });
 
   @override
@@ -21,54 +19,66 @@ class TornPaperDivider extends StatelessWidget {
     return SizedBox(
       height: height,
       width: double.infinity,
-      child: CustomPaint(
-        painter: _TornPaperPainter(topColor: topColor, bottomColor: bottomColor),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          CustomPaint(
+            painter: _PaperBackdropPainter(bottomColor: bottomColor),
+          ),
+          FittedBox(
+            fit: BoxFit.fill,
+            child: ClipRect(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                widthFactor: 0.91,
+                child: Image.asset(
+                  'assets/images/paper.png',
+                  errorBuilder: (_, _, _) => const SizedBox(
+                    width: 2665,
+                    height: 514,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _TornPaperPainter extends CustomPainter {
-  final Color topColor;
+class _PaperBackdropPainter extends CustomPainter {
   final Color bottomColor;
 
-  _TornPaperPainter({required this.topColor, required this.bottomColor});
+  const _PaperBackdropPainter({required this.bottomColor});
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Bottom fill
-    final bgPaint = Paint()..color = bottomColor;
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), bgPaint);
+    final w = size.width;
+    final h = size.height;
 
-    // Top torn-paper shape
-    final paint = Paint()..color = topColor;
-    final path = Path();
-    path.moveTo(0, 0);
+    // Follow the opaque paper centerline so the upper edge remains transparent
+    // (showing hero stripes and profile photo) while the lower half fills with
+    // the red section color underneath the paper's drop shadow.
+    final path = Path()
+      ..moveTo(0, h * 0.42)
+      ..lineTo(w * 0.11, h * 0.46)
+      ..lineTo(w * 0.22, h * 0.38)
+      ..lineTo(w * 0.33, h * 0.41)
+      ..lineTo(w * 0.44, h * 0.51)
+      ..lineTo(w * 0.55, h * 0.43)
+      ..lineTo(w * 0.66, h * 0.34)
+      ..lineTo(w * 0.77, h * 0.25)
+      ..lineTo(w * 0.88, h * 0.23)
+      ..lineTo(w, h * 0.28)
+      ..lineTo(w, h)
+      ..lineTo(0, h)
+      ..close();
 
-    final random = math.Random(42); // fixed seed for consistent look
-    double x = 0;
-    path.lineTo(0, size.height * 0.4);
-
-    while (x < size.width) {
-      final step = 10.0 + random.nextDouble() * 18;
-      final dy = size.height * 0.3 + random.nextDouble() * size.height * 0.4;
-      x += step;
-      path.lineTo(math.min(x, size.width), dy);
-    }
-    path.lineTo(size.width, 0);
-    path.close();
-
-    canvas.drawPath(path, paint);
-
-    // Shadow along the tear line
-    final shadowPaint = Paint()
-      ..color = Colors.black26
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
-    canvas.drawPath(path, shadowPaint);
-    // Re-draw on top
-    canvas.drawPath(path, paint);
+    canvas.drawPath(path, Paint()..color = bottomColor);
   }
 
   @override
-  bool shouldRepaint(_TornPaperPainter old) => false;
+  bool shouldRepaint(_PaperBackdropPainter oldDelegate) =>
+      oldDelegate.bottomColor != bottomColor;
 }

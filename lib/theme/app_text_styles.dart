@@ -1,5 +1,5 @@
 // lib/theme/app_text_styles.dart
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'app_colors.dart';
 
 /// Semua text style menggunakan font system (tidak butuh google_fonts di sini).
